@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"sync"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/kostrominoff/go-pgtk-schedule/internal/groups"
-	"golang.org/x/net/html"
 )
 
 type Site struct {
@@ -31,7 +31,7 @@ func (s *Site) Parse() error {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println(err)
-		return errors.New("ошибка получения сайта")
+		return errors.New("[site, Parse] ошибка получения сайта")
 	}
 
 	defer resp.Body.Close()
@@ -39,7 +39,7 @@ func (s *Site) Parse() error {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
-		return errors.New("ошибка чтения сайта")
+		return errors.New("[site, Parse] ошибка чтения сайта")
 	}
 
 	html := string(body)
@@ -50,84 +50,55 @@ func (s *Site) Parse() error {
 
 func (s *Site) ExtractStudyYearId() (string, error) {
 	if s.html == "" {
-		return "", errors.New("html пустой")
+		return "", errors.New("[site, ExtractStudyYearId] html пустой")
 	}
 
 	re, err := regexp.Compile(`studyyear_id\s*:\s*'(\d+)'`)
 	if err != nil {
 		log.Println(err)
-		return "", errors.New("ошибка компиляции регулярного выражения")
+		return "", errors.New("[site, ExtractStudyYearId] ошибка компиляции регулярного выражения")
 	}
 
 	match := re.FindStringSubmatch(s.html)
 
 	if len(match) <= 1 {
-		return "", errors.New("совпадения не найдены")
+		return "", errors.New("[site, ExtractStudyYearId] совпадения не найдены")
 	}
 
 	return match[1], nil
 }
 
 func (s *Site) ExtractGroups() ([]*groups.Group, error) {
-	doc, err := html.Parse(bytes.NewBuffer([]byte(s.html)))
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(s.html)))
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("ошибка парсинга документа")
+		return nil, errors.New("[site, ExtractGroups] ошибка создания документа")
 	}
 
-	var result []*groups.Group
+	container := doc.Find("div#stream_iddiv")
+	if container == nil {
+		return nil, errors.New("[site, ExtractGroups] контейнер не найден")
+	}
 
-	var processGroupsContainer func(*html.Node)
-	var extractOptions func(*html.Node)
+	var extractedGroups []*groups.Group
 
-	extractOptions = func(n *html.Node) {
-		// Поиск option
-		if n.Type == html.ElementNode && n.Data == "option" {
-			name := extractText(n)
-
-			// Поиск значения группы
-			var value string
-			for _, attr := range n.Attr {
-				if attr.Key == "value" {
-					value = attr.Val
-				}
-			}
-
-			result = append(result, groups.NewGroup(name, value))
+	const placeholder = "Выберите поток"
+	container.Find("option").Each(func(i int, s *goquery.Selection) {
+		name := s.Text()
+		if name == placeholder {
+			return
 		}
 
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			extractOptions(c)
+		value, ok := s.Attr("value")
+		if !ok {
+			return
 		}
-	}
 
-	processGroupsContainer = func(n *html.Node) {
-		// Поиск div
-		if n.Type == html.ElementNode && n.Data == "div" {
-			// Поиск аттрибута id со значением stream_iddiv
-			for _, attr := range n.Attr {
-				if attr.Key == "id" && attr.Val == "stream_iddiv" {
-					extractOptions(n)
-				}
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			processGroupsContainer(c)
-		}
-	}
+		extractedGroups = append(extractedGroups, groups.NewGroup(name, value))
+	})
 
-	processGroupsContainer(doc)
-
-	return result, nil
-}
-
-func extractText(n *html.Node) string {
-	if n.Type == html.TextNode {
-		return n.Data
-	}
-	var text string
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		text += extractText(c)
-	}
-	return text
+	return extractedGroups, nil
 }

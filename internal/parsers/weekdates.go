@@ -43,13 +43,13 @@ func (w *Weekdates) Parse(studyYearId string) error {
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
 		log.Println(err)
-		return errors.New("ошибка маршализации")
+		return errors.New("[weekdates, Parse] ошибка маршализации")
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		log.Println(err)
-		return errors.New("ошибка создания запроса")
+		return errors.New("[weekdates, Parse] ошибка создания запроса")
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -59,7 +59,7 @@ func (w *Weekdates) Parse(studyYearId string) error {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(err)
-		return errors.New("ошибка получения дат")
+		return errors.New("[weekdates, Parse] ошибка получения дат")
 	}
 
 	defer resp.Body.Close()
@@ -67,13 +67,13 @@ func (w *Weekdates) Parse(studyYearId string) error {
 	res, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
-		return errors.New("ошибка чтения ответа")
+		return errors.New("[weekdates, Parse] ошибка чтения ответа")
 	}
 
 	var weeks []Week
 	if err := json.Unmarshal(res, &weeks); err != nil {
 		log.Println(err)
-		return errors.New("ошибка парсинга ответа")
+		return errors.New("[weekdates, Parse] ошибка парсинга ответа")
 	}
 
 	w.Weeks = weeks

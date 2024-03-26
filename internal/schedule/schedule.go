@@ -51,6 +51,7 @@ func (s *Schedule) Parse() {
 
 	// Получение подгрупп
 	for _, group := range s.Groups {
+		log.Println(group)
 		if err := group.ParseSubgroups(); err != nil {
 			log.Println(err)
 		}
