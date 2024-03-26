@@ -49,6 +49,9 @@ func (s *Site) Parse() error {
 }
 
 func (s *Site) ExtractStudyYearId() (string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	if s.html == "" {
 		return "", errors.New("[site, ExtractStudyYearId] html пустой")
 	}
