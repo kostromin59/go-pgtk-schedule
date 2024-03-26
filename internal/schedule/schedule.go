@@ -3,35 +3,56 @@ package schedule
 import (
 	"log"
 
+	"github.com/kostrominoff/go-pgtk-schedule/internal/groups"
 	"github.com/kostrominoff/go-pgtk-schedule/internal/parsers"
 )
 
 type Schedule struct {
 	Site      *parsers.Site
 	Weekdates *parsers.Weekdates
+	Groups    []*groups.Group
 }
 
 func NewSchedule() *Schedule {
 	return &Schedule{
-		parsers.NewSite(),
-		parsers.NewWeekdates(),
+		Site:      parsers.NewSite(),
+		Weekdates: parsers.NewWeekdates(),
 	}
 }
 
 func (s *Schedule) Parse() {
+	// Парсинг сайта
 	if err := s.Site.Parse(); err != nil {
 		log.Println(err)
 		return
 	}
 
+	// Получение текущего года
 	studyYearId, err := s.Site.ExtractStudyYearId()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
+	// Парсинг недель
 	if err := s.Weekdates.Parse(studyYearId); err != nil {
 		log.Println(err)
 		return
+	}
+
+	// Получение групп
+	groups, err := s.Site.ExtractGroups()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	s.Groups = groups
+
+	// Получение подгрупп
+	for _, group := range s.Groups {
+		if err := group.ParseSubgroups(); err != nil {
+			log.Println(err)
+		}
 	}
 }
