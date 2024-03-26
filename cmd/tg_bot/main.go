@@ -1,20 +1,13 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
-	"github.com/kostrominoff/go-pgtk-schedule/internal/parsers"
+	"github.com/kostrominoff/go-pgtk-schedule/internal/schedule"
 )
 
 func main() {
-	s := parsers.NewSite()
-	if err := s.Parse(); err != nil {
-		log.Fatal(err)
-	}
-
-	year, err := s.ExtractStudyYearId()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(year)
+	schedule := schedule.NewSchedule()
+	schedule.Parse()
+	fmt.Printf("%+v\n", schedule.Weekdates.Weeks)
 }

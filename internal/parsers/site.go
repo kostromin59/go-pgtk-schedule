@@ -9,8 +9,6 @@ import (
 	"sync"
 )
 
-const url = "https://psi.thinkery.ru/shedule/public/public_shedule"
-
 type Site struct {
 	html string
 	mu   sync.Mutex
@@ -23,6 +21,8 @@ func NewSite() *Site {
 func (s *Site) Parse() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	const url = "https://psi.thinkery.ru/shedule/public/public_shedule"
 
 	resp, err := http.Get(url)
 	if err != nil {
