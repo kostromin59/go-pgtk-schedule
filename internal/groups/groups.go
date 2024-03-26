@@ -16,7 +16,7 @@ func NewGroup(name, value string) *Group {
 }
 
 // TODO: Сделать метод
-func (g *Group) ParseSubgroups() error {
+func (g *Group) ParseSubgroups(studyYearId, semester string, weekNumber int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 

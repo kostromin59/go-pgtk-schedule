@@ -15,7 +15,7 @@ import (
 
 type Site struct {
 	html string
-	mu   sync.Mutex
+	mu   sync.RWMutex
 }
 
 func NewSite() *Site {
@@ -68,20 +68,58 @@ func (s *Site) ExtractStudyYearId() (string, error) {
 	return match[1], nil
 }
 
-func (s *Site) ExtractGroups() ([]*groups.Group, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
+func (s *Site) buildDoc() (*goquery.Document, error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(s.html)))
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("[site, ExtractGroups] ошибка создания документа")
+		return nil, errors.New("[site, buildDoc] ошибка создания документа")
 	}
 
-	container := doc.Find("div#stream_iddiv")
+	return doc, nil
+}
+
+func (s *Site) ExtractSemester() (string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	doc, err := s.buildDoc()
+	if err != nil {
+		return "", err
+	}
+
+	container := doc.Find("#termdiv")
+	if container == nil {
+		return "", errors.New("[site, ExtractSemester] контейнер не найден")
+	}
+
+	option := container.Find("option").Last()
+	if option == nil {
+		return "", errors.New("[site, ExtractSemester] выбранный семестр не найден")
+	}
+
+	semester, ok := option.Attr("value")
+	if !ok {
+		return "", errors.New("[site, ExtractSemester] атрибут не найден")
+	}
+
+	return semester, nil
+}
+
+func (s *Site) ExtractGroups() ([]*groups.Group, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	doc, err := s.buildDoc()
+	if err != nil {
+		return nil, err
+	}
+
+	container := doc.Find("#stream_iddiv")
 	if container == nil {
 		return nil, errors.New("[site, ExtractGroups] контейнер не найден")
 	}
+
+	container.Find("option")
 
 	var extractedGroups []*groups.Group
 

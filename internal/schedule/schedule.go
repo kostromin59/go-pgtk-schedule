@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/kostrominoff/go-pgtk-schedule/internal/groups"
@@ -11,6 +12,7 @@ type Schedule struct {
 	Site      *parsers.Site
 	Weekdates *parsers.Weekdates
 	Groups    []*groups.Group
+	Semester  string
 }
 
 func NewSchedule() *Schedule {
@@ -40,6 +42,16 @@ func (s *Schedule) Parse() {
 		return
 	}
 
+	// Получение семестра
+	semester, err := s.Site.ExtractSemester()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	s.Semester = semester
+	fmt.Println(semester)
+
 	// Получение групп
 	groups, err := s.Site.ExtractGroups()
 	if err != nil {
@@ -51,7 +63,7 @@ func (s *Schedule) Parse() {
 
 	// Получение подгрупп
 	for _, group := range s.Groups {
-		log.Println(group)
+		// log.Println(group)
 		if err := group.ParseSubgroups(); err != nil {
 			log.Println(err)
 		}
