@@ -14,6 +14,10 @@ type Schedule struct {
 	Weekdates *parsers.Weekdates
 	Groups    []*groups.Group
 	Semester  string
+
+	// TODO: Сделать парсинг пар
+	// mu sync.RWMutex
+	// lessons map[string][]Lesson
 }
 
 func NewSchedule() *Schedule {

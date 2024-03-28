@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/kostrominoff/go-pgtk-schedule/internal/tools"
 )
@@ -79,4 +80,23 @@ func (w *Weekdates) Parse(studyYearId string) error {
 	w.Weeks = weeks
 
 	return nil
+}
+
+func (w *Weekdates) CurrentWeek() *Week {
+	var selected int
+
+	for i, v := range w.Weeks {
+		if v.Selected {
+			selected = i
+			break
+		}
+	}
+
+	now := time.Now()
+
+	if (now.Weekday() == time.Saturday && now.Hour() >= 12) || now.Weekday() == time.Sunday {
+		selected++
+	}
+
+	return &w.Weeks[selected]
 }
