@@ -3,6 +3,7 @@ package schedule
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/kostrominoff/go-pgtk-schedule/internal/groups"
 	"github.com/kostrominoff/go-pgtk-schedule/internal/parsers"
@@ -62,10 +63,16 @@ func (s *Schedule) Parse() {
 	s.Groups = groups
 
 	// Получение подгрупп
-	// for _, group := range s.Groups {
-	// log.Println(group)
-	// if err := group.ParseSubgroups(); err != nil {
-	// 	log.Println(err)
-	// }
-	// }
+	var wg sync.WaitGroup
+	for _, group := range s.Groups {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := group.ParseSubgroups(studyYearId, semester, 30); err != nil {
+				log.Println(err)
+			}
+		}()
+	}
+
+	wg.Wait()
 }

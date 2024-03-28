@@ -11,11 +11,12 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/kostrominoff/go-pgtk-schedule/internal/groups"
+	"github.com/kostrominoff/go-pgtk-schedule/internal/tools"
 )
 
 type Site struct {
 	html string
-	mu   sync.RWMutex
+	mu   sync.Mutex
 }
 
 func NewSite() *Site {
@@ -49,8 +50,8 @@ func (s *Site) Parse() error {
 }
 
 func (s *Site) ExtractStudyYearId() (string, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	if s.html == "" {
 		return "", errors.New("[site, ExtractStudyYearId] html пустой")
@@ -71,21 +72,11 @@ func (s *Site) ExtractStudyYearId() (string, error) {
 	return match[1], nil
 }
 
-func (s *Site) buildDoc() (*goquery.Document, error) {
-	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(s.html)))
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("[site, buildDoc] ошибка создания документа")
-	}
-
-	return doc, nil
-}
-
 func (s *Site) ExtractSemester() (string, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	doc, err := s.buildDoc()
+	doc, err := tools.BuildDoc(bytes.NewBuffer([]byte(s.html)))
 	if err != nil {
 		return "", err
 	}
@@ -109,18 +100,18 @@ func (s *Site) ExtractSemester() (string, error) {
 }
 
 func (s *Site) ExtractGroups() ([]*groups.Group, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	doc, err := s.buildDoc()
+	doc, err := tools.BuildDoc(bytes.NewBuffer([]byte(s.html)))
 	if err != nil {
 		return nil, err
 	}
 
 	container := doc.Find("#stream_iddiv")
-	if container == nil {
-		return nil, errors.New("[site, ExtractGroups] контейнер не найден")
-	}
+	// if container == nil {
+	// 	return nil, errors.New("[site, ExtractGroups] контейнер не найден")
+	// }
 
 	container.Find("option")
 
