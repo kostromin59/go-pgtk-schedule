@@ -4,6 +4,7 @@ import "time"
 
 type CustomDate struct {
 	time.Time
+	Initial string
 }
 
 func (c *CustomDate) UnmarshalJSON(b []byte) error {
@@ -13,6 +14,7 @@ func (c *CustomDate) UnmarshalJSON(b []byte) error {
 	}
 
 	c.Time = t
+	c.Initial = string(b)
 
 	return nil
 }

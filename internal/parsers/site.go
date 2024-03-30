@@ -37,6 +37,10 @@ func (s *Site) Parse() error {
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		return errors.New("[site, Parse] статус код не равен 200")
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)

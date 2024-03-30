@@ -1,7 +1,6 @@
 package schedule
 
 import (
-	"fmt"
 	"log"
 	"sync"
 
@@ -15,15 +14,15 @@ type Schedule struct {
 	Groups    []*groups.Group
 	Semester  string
 
-	// TODO: Сделать парсинг пар
-	// mu sync.RWMutex
-	// lessons map[string][]Lesson
+	mu      sync.RWMutex
+	lessons map[string][]Lesson
 }
 
 func NewSchedule() *Schedule {
 	return &Schedule{
 		Site:      parsers.NewSite(),
 		Weekdates: parsers.NewWeekdates(),
+		lessons:   make(map[string][]Lesson),
 	}
 }
 
@@ -55,7 +54,6 @@ func (s *Schedule) Parse() {
 	}
 
 	s.Semester = semester
-	fmt.Println(semester)
 
 	// Получение групп
 	groups, err := s.Site.ExtractGroups()
@@ -66,17 +64,22 @@ func (s *Schedule) Parse() {
 
 	s.Groups = groups
 
+	week := s.Weekdates.CurrentWeek()
+
 	// Получение подгрупп
 	var wg sync.WaitGroup
 	for _, group := range s.Groups {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := group.ParseSubgroups(studyYearId, semester, 30); err != nil {
+			if err := group.ParseSubgroups(studyYearId, semester, week.Value); err != nil {
 				log.Println(err)
 			}
 		}()
 	}
 
 	wg.Wait()
+
+	// Получение расписания
+	s.ParseSchedules(studyYearId, semester, week)
 }

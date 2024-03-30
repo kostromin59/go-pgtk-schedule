@@ -65,6 +65,10 @@ func (w *Weekdates) Parse(studyYearId string) error {
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		return errors.New("[weekdates, Parse] статус код не равен 200")
+	}
+
 	res, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
