@@ -50,7 +50,7 @@ func (s *Schedule) ParseSchedules(studyYearId string, semester string, week *par
 				return
 			}
 
-			s.lessons[group.Value] = lessons
+			s.Lessons[group.Value] = lessons
 		}()
 	}
 

@@ -15,14 +15,16 @@ type Schedule struct {
 	Semester  string
 
 	mu      sync.RWMutex
-	lessons map[string][]Lesson
+	Lessons map[string][]Lesson
 }
+
+type ScheduleByDates map[string][]Lesson
 
 func NewSchedule() *Schedule {
 	return &Schedule{
 		Site:      parsers.NewSite(),
 		Weekdates: parsers.NewWeekdates(),
-		lessons:   make(map[string][]Lesson),
+		Lessons:   make(map[string][]Lesson),
 	}
 }
 
@@ -82,4 +84,20 @@ func (s *Schedule) Parse() {
 
 	// Получение расписания
 	s.ParseSchedules(studyYearId, semester, week)
+}
+
+func (s *Schedule) FindByGroup(groupId, subgroup string) ScheduleByDates {
+	lessons := make(ScheduleByDates)
+
+	for _, v := range s.Lessons[groupId] {
+		key := v.DateStartText
+
+		if _, ok := lessons[key]; !ok {
+			lessons[key] = []Lesson{}
+		}
+
+		lessons[key] = append(lessons[key], v)
+	}
+
+	return lessons
 }
