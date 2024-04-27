@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"net/http"
 	"sync"
@@ -68,15 +67,9 @@ func (w *Weekdates) Parse(studyYearId string) error {
 		return errors.New("[weekdates, Parse] статус код не равен 200")
 	}
 
-	res, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return errors.New("[weekdates, Parse] ошибка чтения ответа")
-	}
-
 	var weeks []Week
-	if err := json.Unmarshal(res, &weeks); err != nil {
-		log.Println(err)
+
+	if err := json.NewDecoder(resp.Body).Decode(&weeks); err != nil {
 		return errors.New("[weekdates, Parse] ошибка парсинга ответа")
 	}
 

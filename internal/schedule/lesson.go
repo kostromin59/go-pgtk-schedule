@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"net/http"
 	"sync"
 
+	"github.com/kostrominoff/go-pgtk-schedule/internal/groups"
 	"github.com/kostrominoff/go-pgtk-schedule/internal/parsers"
 )
 
@@ -30,7 +30,7 @@ func (s *Schedule) ParseSchedules(studyYearId string, semester string, week *par
 	var wg sync.WaitGroup
 	for _, group := range s.Groups {
 		wg.Add(1)
-		go func() {
+		go func(g *groups.Group) {
 			defer wg.Done()
 
 			s.mu.Lock()
@@ -41,7 +41,7 @@ func (s *Schedule) ParseSchedules(studyYearId string, semester string, week *par
 				Semester:    semester,
 				StartDate:   week.StartDate.Initial,
 				EndDate:     week.EndDate.Initial,
-				GroupId:     group.Value,
+				GroupId:     g.Value,
 			}
 
 			lessons, err := parseByGroup(b)
@@ -50,8 +50,8 @@ func (s *Schedule) ParseSchedules(studyYearId string, semester string, week *par
 				return
 			}
 
-			s.Lessons[group.Value] = lessons
-		}()
+			s.Lessons[g.Value] = lessons
+		}(group)
 	}
 
 	wg.Wait()
@@ -95,15 +95,9 @@ func parseByGroup(b scheduleBody) ([]Lesson, error) {
 		return nil, errors.New("[lesson, parseByGroup] статус код не равен 200")
 	}
 
-	res, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("[lesson, parseByGroup] ошибка чтения ответа")
-	}
-
 	var schedule []Lesson
-	if err := json.Unmarshal(res, &schedule); err != nil {
-		log.Println(err)
+
+	if err := json.NewDecoder(resp.Body).Decode(&schedule); err != nil {
 		return nil, errors.New("[lesson, parseByGroup] ошибка парсинга ответа")
 	}
 

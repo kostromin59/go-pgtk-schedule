@@ -113,9 +113,6 @@ func (s *Site) ExtractGroups() ([]*groups.Group, error) {
 	}
 
 	container := doc.Find("#stream_iddiv")
-	// if container == nil {
-	// 	return nil, errors.New("[site, ExtractGroups] контейнер не найден")
-	// }
 
 	container.Find("option")
 
