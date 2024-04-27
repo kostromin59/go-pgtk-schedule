@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 
@@ -55,7 +54,6 @@ func (w *Weekdates) Parse(studyYearId string) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println(err)
 		return fmt.Errorf("ошибка получения дат: %w", err)
 	}
 
