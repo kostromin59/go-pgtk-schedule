@@ -58,13 +58,13 @@ func (s *Schedule) Parse() {
 	s.Semester = semester
 
 	// Получение групп
-	groups, err := s.Site.ExtractGroups()
+	g, err := s.Site.ExtractGroups()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	s.Groups = groups
+	s.Groups = g
 
 	week := s.Weekdates.CurrentWeek()
 
@@ -72,12 +72,12 @@ func (s *Schedule) Parse() {
 	var wg sync.WaitGroup
 	for _, group := range s.Groups {
 		wg.Add(1)
-		go func() {
+		go func(g *groups.Group) {
 			defer wg.Done()
-			if err := group.ParseSubgroups(studyYearId, semester, week.Value); err != nil {
+			if err := g.ParseSubgroups(studyYearId, semester, week.Value); err != nil {
 				log.Println(err)
 			}
-		}()
+		}(group)
 	}
 
 	wg.Wait()

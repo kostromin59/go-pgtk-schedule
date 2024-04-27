@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/kostrominoff/go-pgtk-schedule/internal/tools"
 )
@@ -33,7 +32,7 @@ func (w *Weekdates) Parse(studyYearId string) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	const url = "https://psi.thinkery.ru/shedule/public/get_weekdates"
+	const url = "https://psi.thinkery.ru/shedule/public/get_weekdates_actual"
 
 	type body struct {
 		StudyYearId string `json:"studyyear_id"`
@@ -96,11 +95,12 @@ func (w *Weekdates) CurrentWeek() *Week {
 		}
 	}
 
-	now := time.Now()
+	// TODO: Расскоментировать
+	// now := time.Now()
 
-	if (now.Weekday() == time.Saturday && now.Hour() >= 12) || now.Weekday() == time.Sunday {
-		selected++
-	}
+	// if (now.Weekday() == time.Saturday && now.Hour() >= 12) || now.Weekday() == time.Sunday {
+	// selected++
+	// }
 
 	return &w.Weeks[selected]
 }
