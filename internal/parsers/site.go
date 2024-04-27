@@ -3,8 +3,8 @@ package parsers
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"regexp"
 	"sync"
@@ -31,20 +31,18 @@ func (s *Site) Parse() error {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Println(err)
-		return errors.New("[site, Parse] ошибка получения сайта")
+		return fmt.Errorf("ошибка получения сайта: %w", err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return errors.New("[site, Parse] статус код не равен 200")
+		return fmt.Errorf("статус код не равен 200: %v", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
-		return errors.New("[site, Parse] ошибка чтения сайта")
+		return fmt.Errorf("ошибка чтения сайта: %w", err)
 	}
 
 	html := string(body)
@@ -58,19 +56,18 @@ func (s *Site) ExtractStudyYearId() (string, error) {
 	defer s.mu.Unlock()
 
 	if s.html == "" {
-		return "", errors.New("[site, ExtractStudyYearId] html пустой")
+		return "", errors.New("html пустой")
 	}
 
 	re, err := regexp.Compile(`studyyear_id\s*:\s*'(\d+)'`)
 	if err != nil {
-		log.Println(err)
-		return "", errors.New("[site, ExtractStudyYearId] ошибка компиляции регулярного выражения")
+		return "", fmt.Errorf("ошибка компиляции регулярного выражения: %w", err)
 	}
 
 	match := re.FindStringSubmatch(s.html)
 
 	if len(match) <= 1 {
-		return "", errors.New("[site, ExtractStudyYearId] совпадения не найдены")
+		return "", errors.New("совпадения не найдены")
 	}
 
 	return match[1], nil
@@ -87,17 +84,17 @@ func (s *Site) ExtractSemester() (string, error) {
 
 	container := doc.Find("#termdiv")
 	if container == nil {
-		return "", errors.New("[site, ExtractSemester] контейнер не найден")
+		return "", errors.New("контейнер не найден")
 	}
 
 	option := container.Find("option").Last()
 	if option == nil {
-		return "", errors.New("[site, ExtractSemester] выбранный семестр не найден")
+		return "", errors.New("выбранный семестр не найден")
 	}
 
 	semester, ok := option.Attr("value")
 	if !ok {
-		return "", errors.New("[site, ExtractSemester] атрибут не найден")
+		return "", errors.New("атрибут не найден")
 	}
 
 	return semester, nil

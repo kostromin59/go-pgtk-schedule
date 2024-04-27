@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"sync"
 
@@ -46,14 +46,12 @@ func (g *Group) ParseSubgroups(studyYearId, semester string, weekNumber int) err
 
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
-		log.Println(err)
-		return errors.New("[groups, ParseSubgroups] ошибка маршализации")
+		return fmt.Errorf("ошибка маршализации: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		log.Println(err)
-		return errors.New("[groups, ParseSubgroups] ошибка создания запроса")
+		return fmt.Errorf("ошибка создания запроса: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -62,16 +60,18 @@ func (g *Group) ParseSubgroups(studyYearId, semester string, weekNumber int) err
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println(err)
-		return errors.New("[groups, ParseSubgroups] ошибка получения подгрупп")
+		return fmt.Errorf("ошибка получения подгрупп: %w", err)
 	}
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("статус код не равен 200: %v", resp.StatusCode)
+	}
+
 	subgroups, err := extractSubgroups(resp.Body)
 	if err != nil {
-		log.Println(err)
-		return errors.New("[groups, ParseSubgroups] ошибка извлечения подгрупп")
+		return fmt.Errorf("ошибка извлечения подгрупп: %w", err)
 	}
 
 	g.Subgroups = subgroups

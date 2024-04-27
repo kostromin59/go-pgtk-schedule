@@ -1,9 +1,8 @@
 package tools
 
 import (
-	"errors"
+	"fmt"
 	"io"
-	"log"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -11,8 +10,7 @@ import (
 func BuildDoc(r io.Reader) (*goquery.Document, error) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
-		log.Println(err)
-		return nil, errors.New("[site, buildDoc] ошибка создания документа")
+		return nil, fmt.Errorf("ошибка создания документа: %w", err)
 	}
 
 	return doc, nil

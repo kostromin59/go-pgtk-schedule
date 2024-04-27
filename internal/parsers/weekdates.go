@@ -3,7 +3,7 @@ package parsers
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -41,14 +41,12 @@ func (w *Weekdates) Parse(studyYearId string) error {
 
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
-		log.Println(err)
-		return errors.New("[weekdates, Parse] ошибка маршализации")
+		return fmt.Errorf("ошибка маршализации: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		log.Println(err)
-		return errors.New("[weekdates, Parse] ошибка создания запроса")
+		return fmt.Errorf("ошибка создания запроса: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -58,19 +56,19 @@ func (w *Weekdates) Parse(studyYearId string) error {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(err)
-		return errors.New("[weekdates, Parse] ошибка получения дат")
+		return fmt.Errorf("ошибка получения дат: %w", err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return errors.New("[weekdates, Parse] статус код не равен 200")
+		return fmt.Errorf("статус код не равен 200: %v", resp.StatusCode)
 	}
 
 	var weeks []Week
 
 	if err := json.NewDecoder(resp.Body).Decode(&weeks); err != nil {
-		return errors.New("[weekdates, Parse] ошибка парсинга ответа")
+		return fmt.Errorf("ошибка парсинга ответа: %w", err)
 	}
 
 	w.Weeks = weeks

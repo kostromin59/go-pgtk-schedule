@@ -1,7 +1,7 @@
 package schedule
 
 import (
-	"log"
+	"log/slog"
 	"sync"
 
 	"github.com/kostrominoff/go-pgtk-schedule/internal/groups"
@@ -31,27 +31,27 @@ func NewSchedule() *Schedule {
 func (s *Schedule) Parse() {
 	// Парсинг сайта
 	if err := s.Site.Parse(); err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 		return
 	}
 
 	// Получение текущего года
 	studyYearId, err := s.Site.ExtractStudyYearId()
 	if err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 		return
 	}
 
 	// Парсинг недель
 	if err := s.Weekdates.Parse(studyYearId); err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 		return
 	}
 
 	// Получение семестра
 	semester, err := s.Site.ExtractSemester()
 	if err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 		return
 	}
 
@@ -60,7 +60,7 @@ func (s *Schedule) Parse() {
 	// Получение групп
 	g, err := s.Site.ExtractGroups()
 	if err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 		return
 	}
 
@@ -75,7 +75,7 @@ func (s *Schedule) Parse() {
 		go func(g *groups.Group) {
 			defer wg.Done()
 			if err := g.ParseSubgroups(studyYearId, semester, week.Value); err != nil {
-				log.Println(err)
+				slog.Error(err.Error())
 			}
 		}(group)
 	}

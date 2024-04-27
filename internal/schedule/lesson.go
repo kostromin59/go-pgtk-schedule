@@ -3,8 +3,8 @@ package schedule
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 
@@ -46,7 +46,7 @@ func (s *Schedule) ParseSchedules(studyYearId string, semester string, week *par
 
 			lessons, err := parseByGroup(b)
 			if err != nil {
-				log.Println(err)
+				slog.Error(err.Error())
 				return
 			}
 
@@ -70,14 +70,12 @@ func parseByGroup(b scheduleBody) ([]Lesson, error) {
 
 	jsonBody, err := json.Marshal(b)
 	if err != nil {
-		log.Println(err)
-		return nil, errors.New("[lesson, parseByGroup] ошибка маршализации")
+		return nil, fmt.Errorf("ошибка маршализации: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		log.Println(err)
-		return nil, errors.New("[lesson, parseByGroup] ошибка создания запроса")
+		return nil, fmt.Errorf("ошибка создания запроса: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -85,20 +83,19 @@ func parseByGroup(b scheduleBody) ([]Lesson, error) {
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println(err)
-		return nil, errors.New("[lesson, parseByGroup] ошибка получения расписания")
+		return nil, fmt.Errorf("ошибка получения расписания: %w", err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, errors.New("[lesson, parseByGroup] статус код не равен 200")
+		return nil, fmt.Errorf("статус код не равен 200: %v", resp.StatusCode)
 	}
 
 	var schedule []Lesson
 
 	if err := json.NewDecoder(resp.Body).Decode(&schedule); err != nil {
-		return nil, errors.New("[lesson, parseByGroup] ошибка парсинга ответа")
+		return nil, fmt.Errorf("ошибка парсинга ответа: %w", err)
 	}
 
 	return schedule, nil
