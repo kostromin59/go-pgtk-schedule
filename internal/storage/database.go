@@ -2,7 +2,9 @@ package storage
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/kostrominoff/go-pgtk-schedule/internal/entities"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -39,4 +41,10 @@ func NewDatabase(c *Config) (*Database, error) {
 	}
 
 	return &Database{db}, nil
+}
+
+func (db *Database) Migrate() {
+	if err := db.DB.AutoMigrate(entities.Student{}); err != nil {
+		log.Fatal(err)
+	}
 }
