@@ -15,6 +15,7 @@ type TgBot struct {
 	DBPassword string
 	DBName     string
 	DBPort     int
+	TgToken    string
 }
 
 func NewTgBot() *TgBot {
@@ -29,6 +30,12 @@ func NewTgBot() *TgBot {
 	if host == "" {
 		slog.Warn("POSTGRES_HOST пустой")
 		host = "localhost"
+	}
+
+	tgToken := os.Getenv("TG_TOKEN")
+
+	if tgToken == "" {
+		log.Fatal("TG_TOKEN пустой")
 	}
 
 	user := os.Getenv("POSTGRES_USER")
@@ -68,6 +75,7 @@ func NewTgBot() *TgBot {
 	config.DBPassword = password
 	config.DBName = name
 	config.DBPort = port
+	config.TgToken = tgToken
 
 	return config
 }
